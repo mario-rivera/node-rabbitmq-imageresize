@@ -1,0 +1,14 @@
+###> ide ###
+/.vscode
+/.idea
+###< ide ###
+
+###> os ###
+.DS_Store
+###< os ###
+
+###> application ###
+.env.*
+/node_modules
+/local
+###< application ###

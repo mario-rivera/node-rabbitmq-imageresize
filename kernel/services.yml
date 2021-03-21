@@ -1,0 +1,6 @@
+services:
+    Amqp/Connection:
+        factory:
+            class: Amqp/ConnectionFactory
+            method: 'create'
+        arguments: ['%amqplib', '%env(RABBIT_DSN)%']

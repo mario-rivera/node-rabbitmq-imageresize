@@ -1,0 +1,25 @@
+version: '3.7'
+
+services:
+
+  node:
+    image: node:12.18.4
+    working_dir: /code
+    volumes:
+      - .:/code
+    networks: 
+      - default
+    command: bash
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment: 
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit heartbeat 180
+    ports:
+      - "8080:15672"
+    networks: 
+      - default
+    
+networks:
+  default:
+    name: local
