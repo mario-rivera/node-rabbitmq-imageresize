@@ -1,26 +1,45 @@
 const http = require('http');
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
+const sharp = require('sharp');
 
 /**
- * @param {Array<string>} urls 
+ * @param {Array<URL>} urls 
+ * @param {string} outputDir 
+ * 
+ * @returns {Promise<string>}
  */
-async function* remoteImages(urls) {
+function* remoteImages(urls, outputDir) {
 
     for (const url of urls) {
-        try {
-            yield await getImage(url);
-        } catch(e) {
-            console.log(e.message);
-        }
+        
+        yield new Promise(async (resolve, reject) => {
+            try {
+                const outputPath = path.join(outputDir, path.basename(url.pathname));
+
+                const response = await getImage(url);
+                
+                response
+                    .pipe(sharp().resize(100, 100))
+                    .pipe(fs.createWriteStream(outputPath));
+
+                response.on('end', () => resolve(outputPath));
+            } catch(e) {
+                reject(e);
+            }
+            
+        });
     }
 }
 
 /**
- * @param {string} url 
+ * @param {string} url
+ * @returns {http.IncomingMessage}
  */
 function getImage(url)
 {
-    url = new URL(url);
+    // console.log(url);
     const client = (url.protocol=="https") ? https : http;
 
     return new Promise((resolve, reject) => {
@@ -30,13 +49,7 @@ function getImage(url)
                 reject(new Error(`${res.statusMessage} ${res.statusCode}: ${url.toString()}`));
             }
 
-            res.on('data', (d) => {
-                // process.stdout.write(d);
-            });
-
-            res.on('end', () => {
-                resolve('wege');
-            });
+            resolve(res);
 
         }).on('error', reject);
     });
@@ -46,11 +59,22 @@ function getImage(url)
 
 (async () => {
     const images = [
-        'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg',
-        'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintels.jpg',
+        new URL('http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg'),
+        new URL('http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg'),
     ];
 
-    for await (const result of remoteImages(images)) {
-        console.log(result);
-    } 
+    try {
+        const outputDir = path.join(__dirname, 'output');
+
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir);
+        }
+
+        for await (const result of remoteImages(images, outputDir)) {
+            console.log(result);
+        }
+    } catch(e) {
+        console.log(e.message);
+    }
+    
 })();
