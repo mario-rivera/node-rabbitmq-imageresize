@@ -4,3 +4,5 @@ services:
             class: Amqp/ConnectionFactory
             method: 'create'
         arguments: ['%amqplib', '%env(RABBIT_DSN)%']
+    Image/SimpleResizer:
+        class: Image/SimpleResizer
